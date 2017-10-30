@@ -235,8 +235,11 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	// Cache Original Body
-	cachedBody, _ := ioutil.ReadAll(req.Body)
-	req.Body = ioutil.NopCloser(bytes.NewReader(cachedBody))
+	var cachedBody []byte
+	if req.Body != nil {
+		cachedBody, _ = ioutil.ReadAll(req.Body)
+		req.Body = ioutil.NopCloser(bytes.NewReader(cachedBody))
+	}
 
 	// Copy the request so we don't modify the input.
 	req2 := new(http.Request)
@@ -266,7 +269,9 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	// Make authenticated request.
 	req2.Header.Set("Authorization", auth)
-	req2.Body = ioutil.NopCloser(bytes.NewReader(cachedBody))
+	if len(cachedBody) > 0 {
+		req2.Body = ioutil.NopCloser(bytes.NewReader(cachedBody))
+	}
 	return t.Transport.RoundTrip(req2)
 }
 
