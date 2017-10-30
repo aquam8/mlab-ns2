@@ -236,7 +236,6 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	// Cache Original Body
 	cachedBody, _ := ioutil.ReadAll(req.Body)
-	fmt.Printf("Request: %s\n", string(cachedBody))
 	req.Body = ioutil.NopCloser(bytes.NewReader(cachedBody))
 
 	// Copy the request so we don't modify the input.
