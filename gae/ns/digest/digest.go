@@ -49,6 +49,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -232,6 +233,11 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, ErrNilTransport
 	}
 
+	// Cache Original Body
+	cachedBody, _ := ioutil.ReadAll(req.Body)
+	fmt.Printf("Request: %s\n", string(cachedBody))
+	req.Body = ioutil.NopCloser(bytes.NewReader(cachedBody))
+
 	// Copy the request so we don't modify the input.
 	req2 := new(http.Request)
 	*req2 = *req
@@ -260,6 +266,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	// Make authenticated request.
 	req2.Header.Set("Authorization", auth)
+	req2.Body = ioutil.NopCloser(bytes.NewReader(cachedBody))
 	return t.Transport.RoundTrip(req2)
 }
 
