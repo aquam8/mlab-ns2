@@ -44,11 +44,13 @@
 package digest
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -232,6 +234,13 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, ErrNilTransport
 	}
 
+	// Cache Original Body
+	var cachedBody []byte
+	if req.Body != nil {
+		cachedBody, _ = ioutil.ReadAll(req.Body)
+		req.Body = ioutil.NopCloser(bytes.NewReader(cachedBody))
+	}
+
 	// Copy the request so we don't modify the input.
 	req2 := new(http.Request)
 	*req2 = *req
@@ -260,6 +269,9 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	// Make authenticated request.
 	req2.Header.Set("Authorization", auth)
+	if len(cachedBody) > 0 {
+		req2.Body = ioutil.NopCloser(bytes.NewReader(cachedBody))
+	}
 	return t.Transport.RoundTrip(req2)
 }
 
